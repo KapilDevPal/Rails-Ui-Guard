@@ -16,7 +16,8 @@ module RailsUiGuard
     # Load the FeatureStatus model after Rails is fully initialized
     # This ensures ApplicationRecord is available
     config.to_prepare do
-      require root.join("app", "models", "rails_ui_guard", "feature_status") unless defined?(RailsUiGuard::FeatureStatus)
+      model_path = File.expand_path("app/models/rails_ui_guard/feature_status.rb", __dir__)
+      require model_path unless defined?(RailsUiGuard::FeatureStatus)
     end
 
     # Make view helpers available globally
