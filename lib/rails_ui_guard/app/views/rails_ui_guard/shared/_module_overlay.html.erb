@@ -1,74 +1,99 @@
-<%# rails_ui_guard/shared/_module_overlay.html.erb %>
-<%# Reusable UI overlay for locked / under_work features. No JS. Mobile-safe. %>
-<%# Inputs: module_status (Symbol), feature_key (String), feature_status (RailsUiGuard::FeatureStatus | nil) %>
+<%# Enhanced user-friendly overlay with lock details %>
+<%# This provides a transparent overlay with clear messaging when modules are locked or under maintenance %>
 
-<% status = (local_assigns[:module_status] || :active).to_sym %>
-<% feature_key = local_assigns[:feature_key].to_s.presence %>
-<% record = local_assigns[:feature_status] %>
-
-<% return if status == :active %>
-
-<%
-  icon, title =
+<% 
+  status = module_status&.to_sym || :active
+  feature_key = feature_key&.to_s
+  
+  # Determine icon, title, and colors based on status
+  case status
+  when :locked
+    icon = "🔒"
+    title = "Module Locked"
+    bg_color = "bg-red-500"
+    text_color = "text-red-700"
+    border_color = "border-red-300"
+    icon_bg = "bg-red-100"
+  when :under_work
+    icon = "🚧"
+    title = "Under Maintenance"
+    bg_color = "bg-yellow-500"
+    text_color = "text-yellow-700"
+    border_color = "border-yellow-300"
+    icon_bg = "bg-yellow-100"
+  else
+    # Should not render if active, but just in case
+    return
+  end
+  
+  # Get custom message or use default
+  message = feature_status&.message.presence
+  if message.blank?
     case status
     when :locked
-      ["🔒", "Feature Locked"]
+      message = "This module is currently locked and not available for your school. Please contact your administrator for more information."
     when :under_work
-      ["🚧", "Under Maintenance"]
+      message = "This module is currently under maintenance. We're working hard to bring it back online soon. Please check back later."
     else
-      ["⛔", "Unavailable"]
+      message = "This module is currently unavailable."
     end
-
-  default_message =
-    case status
-    when :locked
-      "This module is not enabled for your school."
-    when :under_work
-      "This module is temporarily unavailable. Please try again later."
-    else
-      "This module is currently unavailable."
-    end
-
-  message = record&.message.presence || default_message
-  help_text = record&.help_text.presence
+  end
+  help_text = feature_status&.help_text
 %>
 
-<div class="rails-ui-guard-overlay fixed inset-0 flex items-center justify-center"
-     aria-live="polite"
-     aria-label="Module access restricted"
-     role="dialog">
-  <div class="absolute inset-0 bg-black/40"></div>
-
-  <div class="rails-ui-guard-overlay-content bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 sm:p-8 border border-gray-200">
-    <div class="flex items-start gap-4">
-      <div class="text-5xl sm:text-6xl leading-none"><%= icon %></div>
-      <div class="flex-1 min-w-0">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
-          <%= title %>
-        </h2>
-
+<div class="rails-ui-guard-overlay fixed inset-0 flex items-center justify-center z-[10000] pointer-events-auto" 
+     style="background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+  <div class="rails-ui-guard-overlay-content bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-100 <%= border_color %> border-2">
+    <!-- Header with Icon -->
+    <div class="<%= bg_color %> rounded-t-xl px-6 py-4 flex items-center space-x-4">
+      <div class="<%= icon_bg %> rounded-full p-3 flex items-center justify-center">
+        <span class="text-3xl"><%= icon %></span>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-xl font-bold text-white"><%= title %></h2>
         <% if feature_key.present? %>
-          <p class="mt-1 text-xs sm:text-sm text-gray-500">
-            <span class="font-mono bg-gray-100 px-2 py-1 rounded"><%= feature_key %></span>
+          <p class="text-sm text-white opacity-90 mt-1">
+            <%= feature_key.humanize %>
           </p>
         <% end %>
-
-        <p class="mt-4 text-sm sm:text-base text-gray-700">
-          <%= message %>
-        </p>
-
-        <% if help_text.present? %>
-          <p class="mt-2 text-sm text-gray-600">
+      </div>
+    </div>
+    
+    <!-- Content -->
+    <div class="px-6 py-6">
+      <div class="<%= text_color %> mb-4">
+        <p class="text-base leading-relaxed whitespace-pre-wrap"><%= message %></p>
+      </div>
+      
+      <% if help_text.present? %>
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+            <strong class="text-gray-800">Need Help?</strong><br>
             <%= help_text %>
           </p>
-        <% end %>
-
-        <div class="mt-6 text-xs sm:text-sm text-gray-500">
-          If you believe you need access, please contact your school administrator/support.
         </div>
+      <% end %>
+      
+      <!-- Action Buttons -->
+      <div class="mt-6 flex flex-col sm:flex-row gap-3">
+        <% if defined?(root_path) %>
+          <%= link_to root_path, 
+              class: "flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-center transition-colors duration-200" do %>
+            <i class="fas fa-home mr-2"></i>
+            Go to Dashboard
+          <% end %>
+        <% end %>
+        
+        <% if defined?(current_user) && (current_user&.respond_to?(:super_admin?) && current_user&.super_admin?) || (current_user&.respond_to?(:school_head?) && current_user&.school_head?) %>
+          <% if defined?(admin_feature_statuses_path) %>
+            <%= link_to admin_feature_statuses_path, 
+                class: "flex-1 px-4 py-2 #{bg_color} hover:opacity-90 text-white rounded-lg font-medium text-center transition-opacity duration-200" do %>
+              <i class="fas fa-cog mr-2"></i>
+              Manage Access
+            <% end %>
+          <% end %>
+        <% end %>
       </div>
     </div>
   </div>
 </div>
-
-
