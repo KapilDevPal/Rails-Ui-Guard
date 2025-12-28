@@ -19,7 +19,8 @@ end
 
 # Core pieces (required early so models can safely `include RailsUiGuard::...`)
 require_relative "rails_ui_guard/concerns/feature_statusable"
-require_relative "rails_ui_guard/app/models/rails_ui_guard/feature_status"
+# Note: FeatureStatus model is loaded by the engine via config.to_prepare
+# to ensure ApplicationRecord is available
 
 require_relative "rails_ui_guard/version"
 require_relative "rails_ui_guard/controller_helpers"
