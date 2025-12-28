@@ -1,0 +1,21 @@
+class CreateRailsUiGuardFeatureStatuses < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :rails_ui_guard_feature_statuses, id: :uuid do |t|
+      t.references :statusable, polymorphic: true, null: false, type: :uuid, index: true
+      t.string :feature_key, null: false
+      t.string :status, null: false, default: "active"
+      t.text :message
+      t.text :help_text
+
+      t.timestamps
+    end
+
+    add_index :rails_ui_guard_feature_statuses, 
+              [:statusable_type, :statusable_id, :feature_key], 
+              unique: true, 
+              name: "index_rails_ui_guard_feature_statuses_unique"
+    add_index :rails_ui_guard_feature_statuses, :feature_key
+    add_index :rails_ui_guard_feature_statuses, :status
+  end
+end
+

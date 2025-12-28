@@ -1,0 +1,74 @@
+<%# rails_ui_guard/shared/_module_overlay.html.erb %>
+<%# Reusable UI overlay for locked / under_work features. No JS. Mobile-safe. %>
+<%# Inputs: module_status (Symbol), feature_key (String), feature_status (RailsUiGuard::FeatureStatus | nil) %>
+
+<% status = (local_assigns[:module_status] || :active).to_sym %>
+<% feature_key = local_assigns[:feature_key].to_s.presence %>
+<% record = local_assigns[:feature_status] %>
+
+<% return if status == :active %>
+
+<%
+  icon, title =
+    case status
+    when :locked
+      ["🔒", "Feature Locked"]
+    when :under_work
+      ["🚧", "Under Maintenance"]
+    else
+      ["⛔", "Unavailable"]
+    end
+
+  default_message =
+    case status
+    when :locked
+      "This module is not enabled for your school."
+    when :under_work
+      "This module is temporarily unavailable. Please try again later."
+    else
+      "This module is currently unavailable."
+    end
+
+  message = record&.message.presence || default_message
+  help_text = record&.help_text.presence
+%>
+
+<div class="rails-ui-guard-overlay fixed inset-0 flex items-center justify-center"
+     aria-live="polite"
+     aria-label="Module access restricted"
+     role="dialog">
+  <div class="absolute inset-0 bg-black/40"></div>
+
+  <div class="rails-ui-guard-overlay-content bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-6 sm:p-8 border border-gray-200">
+    <div class="flex items-start gap-4">
+      <div class="text-5xl sm:text-6xl leading-none"><%= icon %></div>
+      <div class="flex-1 min-w-0">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
+          <%= title %>
+        </h2>
+
+        <% if feature_key.present? %>
+          <p class="mt-1 text-xs sm:text-sm text-gray-500">
+            <span class="font-mono bg-gray-100 px-2 py-1 rounded"><%= feature_key %></span>
+          </p>
+        <% end %>
+
+        <p class="mt-4 text-sm sm:text-base text-gray-700">
+          <%= message %>
+        </p>
+
+        <% if help_text.present? %>
+          <p class="mt-2 text-sm text-gray-600">
+            <%= help_text %>
+          </p>
+        <% end %>
+
+        <div class="mt-6 text-xs sm:text-sm text-gray-500">
+          If you believe you need access, please contact your school administrator/support.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+

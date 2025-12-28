@@ -1,0 +1,32 @@
+Rails UI Guard has been installed!
+
+Next steps:
+
+1. Run the migration:
+   rails db:migrate
+
+2. Include in your model (e.g., School):
+   class School < ApplicationRecord
+     include RailsUiGuard::FeatureStatusable
+     has_feature_status
+   end
+
+3. Include in ApplicationController:
+   class ApplicationController < ActionController::Base
+     include RailsUiGuard::ControllerHelpers
+   end
+
+4. Use in your controllers:
+   class FeesController < ApplicationController
+     before_action -> { enforce_feature_access("fee_management") }
+     
+     def index
+       @module_status = current_school.module_status("fee_management")
+     end
+   end
+
+5. Add to your layout (app/views/layouts/application.html.erb):
+   <%= render_module_overlay(@module_status) %>
+
+For complete documentation, see: https://github.com/KapilDevPal/Rails-Ui-Guard
+
